@@ -1,0 +1,47 @@
+# Retail Sales Forecasting - Configuration Example
+# Copy this file to config.yaml and update with your values
+
+project:
+  name: retail-sales-forecast
+  version: 1.0.0
+
+# Census Bureau API settings
+census_api:
+  base_url: https://api.census.gov/data/timeseries/eits/mrts
+  category_code: "445"  # Food and Beverage Stores
+  data_type_code: "SM"  # Monthly Sales
+  start_year: 2015
+  # API key should be in .env file, not here
+
+# Data paths (relative to project root)
+paths:
+  raw: data/raw
+  processed: data/processed
+  predictions: data/predictions
+  models: models
+
+# Prophet model settings
+prophet:
+  seasonality_mode: multiplicative
+  yearly_seasonality: true
+  weekly_seasonality: false
+  daily_seasonality: false
+  changepoint_prior_scale: 0.05
+  seasonality_prior_scale: 10
+  holidays_prior_scale: 10
+  interval_width: 0.95
+  forecast_periods: 6  # months ahead
+
+# Dashboard settings
+dashboard:
+  confidence_levels:
+    - 0.80
+    - 0.95
+  export_format: png
+  theme: retail_forecast
+
+# Pipeline settings
+pipeline:
+  schedule: "0 6 1 * *"  # 1st of month at 6 AM UTC
+  retries: 3
+  retry_delay_minutes: 5

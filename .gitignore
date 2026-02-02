@@ -1,0 +1,40 @@
+# Private planning files - DO NOT PUSH
+idea.md
+project_*.md
+planning/
+notes/
+TODO.md
+
+# Claude session data
+.claude/
+
+# Environment & secrets
+.env
+.env.*
+*.env
+
+# Data files (too large / not needed in repo)
+**/data/raw/*
+**/data/processed/*
+**/data/predictions/*
+**/models/*.pkl
+!**/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+logs/
