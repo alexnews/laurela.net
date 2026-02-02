@@ -24,7 +24,8 @@ class CensusExtractor:
             "get": "cell_value,time_slot_id,category_code",
             "category_code": self.category_code,
             "data_type_code": "SM",
-            "time_slot_id": f"from {start_year}",
+            "seasonally_adj": "no",
+            "time": f"from {start_year}",
             "key": self.api_key
         }
 
@@ -35,7 +36,11 @@ class CensusExtractor:
         data = response.json()
         df = pd.DataFrame(data[1:], columns=data[0])
 
-        df['ds'] = pd.to_datetime(df['time_slot_id'], format='%Y%m')
+        # Handle duplicate column names
+        df = df.loc[:, ~df.columns.duplicated()]
+
+        # Date is in 'time' column (format: YYYY-MM)
+        df['ds'] = pd.to_datetime(df['time'], format='%Y-%m')
         df['y'] = pd.to_numeric(df['cell_value'], errors='coerce')
         df = df.sort_values('ds').reset_index(drop=True)
 

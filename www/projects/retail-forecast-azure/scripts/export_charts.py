@@ -129,6 +129,27 @@ def export_all():
     output_dir = Path("static")
     output_dir.mkdir(exist_ok=True)
 
+    # Load data for KPIs
+    df = pd.read_parquet("data/processed/retail_sales_clean.parquet")
+    forecast = pd.read_csv("data/predictions/forecast_latest.csv")
+    forecast['ds'] = pd.to_datetime(forecast['ds'])
+
+    # Calculate KPIs
+    latest_month = df.iloc[-1]
+    latest_value = latest_month['y'] / 1000  # Convert to billions
+    latest_date = latest_month['ds'].strftime('%b %Y')
+
+    # Next month forecast (first future date)
+    last_actual = df['ds'].max()
+    future_forecast = forecast[forecast['ds'] > last_actual].iloc[0]
+    forecast_value = future_forecast['yhat'] / 1000
+    forecast_date = future_forecast['ds'].strftime('%b %Y')
+
+    # YoY growth
+    yoy_growth = latest_month['yoy_growth']
+    growth_sign = '+' if yoy_growth >= 0 else ''
+    growth_color = '#4CAF50' if yoy_growth >= 0 else '#F44336'
+
     charts = [
         ('forecast-chart.html', create_forecast_chart()),
         ('seasonality-chart.html', create_seasonality_chart()),
@@ -140,22 +161,23 @@ def export_all():
         fig.write_html(filepath, include_plotlyjs='cdn', full_html=True)
         print(f"Exported: {filepath}")
 
-    # Also create combined dashboard
+    # Also create combined dashboard with actual KPIs
     combined = Path("static/dashboard.html")
-    html = """<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html>
 <head>
     <title>Retail Sales Forecast Dashboard</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { color: #1976D2; }
-        .chart { background: white; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        iframe { border: none; width: 100%; height: 450px; }
-        .metrics { display: flex; gap: 20px; margin: 20px 0; }
-        .metric { background: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .metric-value { font-size: 2em; font-weight: bold; color: #1976D2; }
-        .metric-label { color: #666; margin-top: 5px; }
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }}
+        .container {{ max-width: 1200px; margin: 0 auto; }}
+        h1 {{ color: #1976D2; }}
+        .chart {{ background: white; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        iframe {{ border: none; width: 100%; height: 450px; }}
+        .metrics {{ display: flex; gap: 20px; margin: 20px 0; }}
+        .metric {{ background: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .metric-value {{ font-size: 2em; font-weight: bold; color: #1976D2; }}
+        .metric-label {{ color: #666; margin-top: 5px; }}
+        .metric-sub {{ font-size: 0.9em; color: #999; margin-top: 3px; }}
     </style>
 </head>
 <body>
@@ -165,16 +187,19 @@ def export_all():
 
         <div class="metrics">
             <div class="metric">
-                <div class="metric-value" id="current">-</div>
+                <div class="metric-value">${latest_value:.1f}B</div>
                 <div class="metric-label">Latest Month</div>
+                <div class="metric-sub">{latest_date}</div>
             </div>
             <div class="metric">
-                <div class="metric-value" id="forecast">-</div>
+                <div class="metric-value">${forecast_value:.1f}B</div>
                 <div class="metric-label">Next Month Forecast</div>
+                <div class="metric-sub">{forecast_date}</div>
             </div>
             <div class="metric">
-                <div class="metric-value" id="growth">-</div>
+                <div class="metric-value" style="color: {growth_color};">{growth_sign}{yoy_growth:.1f}%</div>
                 <div class="metric-label">YoY Growth</div>
+                <div class="metric-sub">vs same month last year</div>
             </div>
         </div>
 
